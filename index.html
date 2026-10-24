@@ -1,0 +1,490 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>PPAW Week 6 - Katalog Produk dan Form Pemesanan</title>
+  <style>
+:root {
+  --ink: #1b2430;
+  --muted: #5b6776;
+  --bg: #f2f5f7;
+  --surface: #ffffff;
+  --line: #d5dce3;
+  --accent: #0f766e;
+  --accent-dark: #0b5a54;
+  --danger: #b42318;
+  --ok: #067647;
+}
+
+* { box-sizing: border-box; }
+
+body {
+  margin: 0;
+  font-family: "Segoe UI", system-ui, -apple-system, Roboto, sans-serif;
+  color: var(--ink);
+  background: var(--bg);
+  line-height: 1.55;
+}
+
+.site-header {
+  background: var(--ink);
+  color: #fff;
+  padding: 2rem 1.25rem;
+  text-align: center;
+}
+.site-header h1 { margin: 0 0 .25rem; font-size: 1.75rem; }
+.site-header p { margin: 0; color: #b9c4d0; }
+
+main { max-width: 1080px; margin: 0 auto; padding: 1.5rem 1.25rem 3rem; }
+section { margin-bottom: 3rem; }
+h2 { margin: 0 0 1rem; font-size: 1.35rem; }
+
+/* ---------- Produk ---------- */
+.toolbar { display: flex; flex-direction: column; gap: .35rem; max-width: 360px; margin-bottom: 1rem; }
+.toolbar label { font-weight: 600; font-size: .9rem; }
+
+input, select, textarea {
+  width: 100%;
+  padding: .6rem .75rem;
+  font: inherit;
+  color: inherit;
+  background: var(--surface);
+  border: 1px solid var(--line);
+  border-radius: 6px;
+}
+input:focus-visible, select:focus-visible, textarea:focus-visible,
+button:focus-visible, a:focus-visible {
+  outline: 3px solid #7cc4bd;
+  outline-offset: 1px;
+}
+
+.status { min-height: 1.5rem; margin: 0 0 1rem; color: var(--muted); }
+.status.error-box {
+  color: var(--danger);
+  background: #fef3f2;
+  border: 1px solid #fecdca;
+  border-radius: 6px;
+  padding: .75rem 1rem;
+}
+.status button { margin-left: .75rem; }
+
+.spinner {
+  display: inline-block;
+  width: 1rem; height: 1rem;
+  margin-right: .5rem;
+  vertical-align: -2px;
+  border: 2px solid var(--line);
+  border-top-color: var(--accent);
+  border-radius: 50%;
+  animation: putar .8s linear infinite;
+}
+@keyframes putar { to { transform: rotate(360deg); } }
+
+.grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(210px, 1fr));
+  gap: 1rem;
+}
+.card {
+  display: flex;
+  flex-direction: column;
+  background: var(--surface);
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  overflow: hidden;
+}
+.card img { width: 100%; height: 160px; object-fit: contain; background: #e9eef2; }
+.card-body { display: flex; flex-direction: column; gap: .35rem; flex: 1; padding: .85rem; }
+.card h3 { margin: 0; font-size: 1rem; }
+.card .kategori { font-size: .8rem; color: var(--muted); text-transform: capitalize; }
+.card .harga { margin-top: auto; font-size: 1.15rem; font-weight: 700; color: var(--accent-dark); }
+
+button {
+  font: inherit;
+  cursor: pointer;
+  border-radius: 6px;
+  border: 1px solid var(--accent);
+  background: var(--surface);
+  color: var(--accent-dark);
+  padding: .5rem .85rem;
+}
+button:hover { background: #e6f4f2; }
+.btn-utama { background: var(--accent); color: #fff; font-weight: 600; width: 100%; padding: .7rem; }
+.btn-utama:hover { background: var(--accent-dark); }
+
+/* ---------- Form ---------- */
+form {
+  max-width: 520px;
+  background: var(--surface);
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  padding: 1.5rem;
+}
+.field { margin-bottom: 1rem; }
+.field label { display: block; margin-bottom: .3rem; font-weight: 600; font-size: .9rem; }
+.field input.invalid, .field select.invalid { border-color: var(--danger); }
+.field input.valid, .field select.valid { border-color: var(--ok); }
+.error { display: block; min-height: 1.1rem; margin-top: .25rem; color: var(--danger); font-size: .85rem; }
+.hint { color: var(--muted); font-size: .8rem; }
+
+.hasil {
+  max-width: 520px;
+  margin-top: 1rem;
+  padding: 1rem 1.25rem;
+  border-radius: 8px;
+  background: #ecfdf3;
+  border: 1px solid #abefc6;
+  color: #05603a;
+}
+.hasil h3 { margin: 0 0 .5rem; }
+.hasil ul { margin: 0; padding-left: 1.2rem; }
+
+.site-footer { text-align: center; padding: 1.5rem; color: var(--muted); font-size: .9rem; }
+
+@media (prefers-reduced-motion: reduce) {
+  .spinner { animation-duration: 3s; }
+}
+  </style>
+</head>
+<body>
+  <header class="site-header">
+    <h1>Katalog Produk &amp; Form Pemesanan</h1>
+    <p>PPAW Week 6: Fetch API, DOM, dan Event Handling</p>
+  </header>
+
+  <main>
+    <!-- IMPLEMENTASI 1: FETCH API -->
+    <section id="produk" aria-labelledby="judul-produk">
+      <h2 id="judul-produk">Daftar Produk</h2>
+
+      <div class="toolbar">
+        <label for="cari">Cari produk</label>
+        <input type="search" id="cari" placeholder="Ketik nama produk..." disabled>
+      </div>
+
+      <p id="status" class="status" role="status" aria-live="polite"></p>
+      <div id="daftar-produk" class="grid"></div>
+    </section>
+
+    <!-- IMPLEMENTASI 2: FORM DOM & EVENT HANDLING -->
+    <section id="pesan" aria-labelledby="judul-pesan">
+      <h2 id="judul-pesan">Form Pemesanan</h2>
+
+      <form id="form-pesan" novalidate>
+        <div class="field">
+          <label for="nama">Nama lengkap</label>
+          <input type="text" id="nama" name="nama" autocomplete="name">
+          <small class="error" id="error-nama"></small>
+        </div>
+
+        <div class="field">
+          <label for="email">Email</label>
+          <input type="email" id="email" name="email" autocomplete="email">
+          <small class="error" id="error-email"></small>
+        </div>
+
+        <div class="field">
+          <label for="pilih-produk">Produk</label>
+          <input type="text" id="pilih-produk" name="produk" list="daftar-pilihan"
+                 placeholder="Ketik atau pilih nama produk" autocomplete="off">
+          <datalist id="daftar-pilihan"></datalist>
+          <small class="error" id="error-produk"></small>
+        </div>
+
+        <div class="field">
+          <label for="jumlah">Jumlah (1 sampai 10)</label>
+          <input type="number" id="jumlah" name="jumlah" value="1" min="1" max="10">
+          <small class="error" id="error-jumlah"></small>
+        </div>
+
+        <div class="field">
+          <label for="catatan">Catatan (opsional)</label>
+          <textarea id="catatan" name="catatan" rows="3" maxlength="120"></textarea>
+          <small class="hint" id="hitung-catatan">0 / 120 karakter</small>
+        </div>
+
+        <button type="submit" class="btn-utama">Kirim pesanan</button>
+      </form>
+
+      <div id="hasil" class="hasil" role="status" aria-live="polite" hidden></div>
+    </section>
+  </main>
+
+  <footer class="site-footer">
+    <p>Data produk dari <a href="https://dummyjson.com/products">dummyjson.com</a></p>
+  </footer>
+
+  <script>
+/* =========================================================
+   PPAW Week 6 - Fetch API, DOM, dan Event Handling
+   ========================================================= */
+
+const API_URL = "https://dummyjson.com/products";
+
+// ---------- Elemen DOM ----------
+const elStatus = document.getElementById("status");
+const elDaftar = document.getElementById("daftar-produk");
+const elCari = document.getElementById("cari");
+
+const form = document.getElementById("form-pesan");
+const inpNama = document.getElementById("nama");
+const inpEmail = document.getElementById("email");
+const inpProduk = document.getElementById("pilih-produk");
+const elPilihan = document.getElementById("daftar-pilihan");
+const inpJumlah = document.getElementById("jumlah");
+const inpCatatan = document.getElementById("catatan");
+const elHitung = document.getElementById("hitung-catatan");
+const elHasil = document.getElementById("hasil");
+
+let semuaProduk = [];
+
+/* =========================================================
+   1. FETCH API - DATA PRODUK
+   ========================================================= */
+
+function tampilkanLoading() {
+  elStatus.className = "status";
+  elStatus.innerHTML = "";
+  const spinner = document.createElement("span");
+  spinner.className = "spinner";
+  elStatus.append(spinner, "Memuat data produk...");
+  elDaftar.innerHTML = "";
+}
+
+function tampilkanError(pesan) {
+  elStatus.className = "status error-box";
+  elStatus.textContent = "Data produk gagal dimuat. " + pesan;
+
+  const tombol = document.createElement("button");
+  tombol.type = "button";
+  tombol.textContent = "Coba lagi";
+  tombol.addEventListener("click", ambilProduk);
+  elStatus.append(tombol);
+}
+
+async function ambilProduk() {
+  tampilkanLoading();
+  elCari.disabled = true;
+
+  try {
+    const response = await fetch(API_URL);
+    if (!response.ok) {
+      throw new Error("Server membalas dengan status " + response.status + ".");
+    }
+
+    const data = await response.json();
+    if (!Array.isArray(data.products) || data.products.length === 0) {
+      throw new Error("Data produk kosong.");
+    }
+
+    semuaProduk = data.products;
+    elStatus.textContent = "";
+    renderProduk(semuaProduk);
+    isiPilihanProduk(semuaProduk);
+    elCari.disabled = false;
+  } catch (err) {
+    // err.name === "TypeError" biasanya berarti jaringan terputus
+    const pesan = err.name === "TypeError"
+      ? "Periksa koneksi internet kamu."
+      : err.message;
+    tampilkanError(pesan);
+  }
+}
+
+function formatHarga(angka) {
+  return "$" + Number(angka).toFixed(2);
+}
+
+function buatKartu(produk) {
+  const kartu = document.createElement("article");
+  kartu.className = "card";
+
+  const gambar = document.createElement("img");
+  gambar.src = produk.thumbnail;
+  gambar.alt = produk.title;
+  gambar.loading = "lazy";
+
+  const isi = document.createElement("div");
+  isi.className = "card-body";
+
+  const nama = document.createElement("h3");
+  nama.textContent = produk.title;
+
+  const kategori = document.createElement("span");
+  kategori.className = "kategori";
+  kategori.textContent = produk.category;
+
+  const harga = document.createElement("span");
+  harga.className = "harga";
+  harga.textContent = formatHarga(produk.price);
+
+  const tombol = document.createElement("button");
+  tombol.type = "button";
+  tombol.textContent = "Pesan produk ini";
+  tombol.addEventListener("click", () => pilihProduk(produk.id));
+
+  isi.append(nama, kategori, harga, tombol);
+  kartu.append(gambar, isi);
+  return kartu;
+}
+
+function renderProduk(daftar) {
+  elDaftar.innerHTML = "";
+
+  if (daftar.length === 0) {
+    elStatus.textContent = "Tidak ada produk yang cocok dengan pencarian.";
+    return;
+  }
+
+  elStatus.textContent = "Menampilkan " + daftar.length + " produk.";
+  const fragment = document.createDocumentFragment();
+  daftar.forEach((produk) => fragment.append(buatKartu(produk)));
+  elDaftar.append(fragment);
+}
+
+// Event "input": filter produk saat pengguna mengetik
+elCari.addEventListener("input", () => {
+  const kata = elCari.value.trim().toLowerCase();
+  const hasil = semuaProduk.filter((p) => p.title.toLowerCase().includes(kata));
+  renderProduk(hasil);
+});
+
+/* =========================================================
+   2. FORM - DOM & EVENT HANDLING
+   ========================================================= */
+
+// Saran nama produk (datalist). Kolom tetap bisa diketik walau data gagal dimuat.
+function isiPilihanProduk(daftar) {
+  elPilihan.innerHTML = "";
+  daftar.forEach((p) => {
+    const opsi = document.createElement("option");
+    opsi.value = p.title;
+    opsi.label = formatHarga(p.price);
+    elPilihan.append(opsi);
+  });
+}
+
+// Event "click" pada kartu produk: isi form otomatis lalu geser ke form
+function pilihProduk(id) {
+  const produk = semuaProduk.find((p) => p.id === id);
+  inpProduk.value = produk.title;
+  validasiProduk();
+  document.getElementById("pesan").scrollIntoView({ behavior: "smooth" });
+  inpNama.focus({ preventScroll: true });
+}
+
+// ---------- Validasi: tiap fungsi mengembalikan true jika valid ----------
+
+function setStatusField(input, pesanError) {
+  const elError = document.getElementById("error-" + input.name);
+  elError.textContent = pesanError;
+  input.classList.toggle("invalid", pesanError !== "");
+  input.classList.toggle("valid", pesanError === "");
+  return pesanError === "";
+}
+
+function validasiNama() {
+  const nilai = inpNama.value.trim();
+  if (nilai === "") return setStatusField(inpNama, "Nama wajib diisi.");
+  if (nilai.length < 3) return setStatusField(inpNama, "Nama minimal 3 karakter.");
+  if (!/^[A-Za-z\s.'-]+$/.test(nilai)) {
+    return setStatusField(inpNama, "Nama hanya boleh berisi huruf.");
+  }
+  return setStatusField(inpNama, "");
+}
+
+function validasiEmail() {
+  const nilai = inpEmail.value.trim();
+  if (nilai === "") return setStatusField(inpEmail, "Email wajib diisi.");
+  if (!/^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/.test(nilai)) {
+    return setStatusField(inpEmail, "Format email tidak valid, contoh: nama@email.com.");
+  }
+  return setStatusField(inpEmail, "");
+}
+
+function validasiProduk() {
+  const nilai = inpProduk.value.trim();
+  if (nilai === "") return setStatusField(inpProduk, "Nama produk wajib diisi.");
+  if (nilai.length < 2) return setStatusField(inpProduk, "Nama produk minimal 2 karakter.");
+  return setStatusField(inpProduk, "");
+}
+
+function validasiJumlah() {
+  const nilai = Number(inpJumlah.value);
+  if (inpJumlah.value === "") return setStatusField(inpJumlah, "Jumlah wajib diisi.");
+  if (!Number.isInteger(nilai) || nilai < 1 || nilai > 10) {
+    return setStatusField(inpJumlah, "Jumlah harus bilangan bulat 1 sampai 10.");
+  }
+  return setStatusField(inpJumlah, "");
+}
+
+// Event "input" / "change": validasi langsung saat pengguna mengisi
+inpNama.addEventListener("input", validasiNama);
+inpEmail.addEventListener("input", validasiEmail);
+inpProduk.addEventListener("input", validasiProduk);
+inpJumlah.addEventListener("input", validasiJumlah);
+
+inpCatatan.addEventListener("input", () => {
+  elHitung.textContent = inpCatatan.value.length + " / 120 karakter";
+});
+
+// Event "submit": validasi semua, lalu tampilkan hasil
+form.addEventListener("submit", (event) => {
+  event.preventDefault();
+
+  const cekSemua = [validasiNama(), validasiEmail(), validasiProduk(), validasiJumlah()];
+  if (cekSemua.includes(false)) {
+    elHasil.hidden = true;
+    form.querySelector(".invalid").focus();
+    return;
+  }
+
+  const namaProduk = inpProduk.value.trim();
+  const produk = semuaProduk.find((p) => p.title.toLowerCase() === namaProduk.toLowerCase());
+  const jumlah = Number(inpJumlah.value);
+  tampilkanHasil({
+    nama: inpNama.value.trim(),
+    email: inpEmail.value.trim(),
+    produk: produk ? produk.title : namaProduk,
+    jumlah,
+    total: produk ? produk.price * jumlah : null,
+    catatan: inpCatatan.value.trim(),
+  });
+
+  form.reset();
+  form.querySelectorAll(".valid, .invalid").forEach((el) => el.classList.remove("valid", "invalid"));
+  elHitung.textContent = "0 / 120 karakter";
+});
+
+function tampilkanHasil(data) {
+  elHasil.innerHTML = "";
+
+  const judul = document.createElement("h3");
+  judul.textContent = "Pesanan berhasil dikirim, terima kasih " + data.nama + "!";
+
+  const daftar = document.createElement("ul");
+  const baris = [
+    "Email: " + data.email,
+    "Produk: " + data.produk,
+    "Jumlah: " + data.jumlah,
+  ];
+  if (data.total !== null) baris.push("Total harga: " + formatHarga(data.total));
+  if (data.catatan) baris.push("Catatan: " + data.catatan);
+
+  baris.forEach((teks) => {
+    const li = document.createElement("li");
+    li.textContent = teks;
+    daftar.append(li);
+  });
+
+  elHasil.append(judul, daftar);
+  elHasil.hidden = false;
+  elHasil.scrollIntoView({ behavior: "smooth", block: "nearest" });
+}
+
+// ---------- Mulai ----------
+ambilProduk();
+  </script>
+</body>
+</html>
